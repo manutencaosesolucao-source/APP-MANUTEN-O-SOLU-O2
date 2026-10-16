@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0b0f12">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Solução Elétrica">
+    <title>SOLUÇÃO EQUIPAMENTOS ELÉTRICOS - Dashboard & PWA</title>
+
+    <!-- Web App Manifest embedded dynamically -->
+    <link rel="manifest" id="manifestPlaceholder">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2983/2983780.png">
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Chart.js & Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <style>
+        :root {
+            --primary: #008080;
+            --primary-glow: #00e5e5;
+            --primary-glow-alpha: rgba(0, 229, 229, 0.25);
+            --bg-dark: #0b0f12;
+            --panel-bg: rgba(18, 26, 31, 0.85);
+            --panel-border: rgba(0, 229, 229, 0.15);
+            --text-main: #f0f6f6;
+            --text-muted: #8a9ea7;
+            --danger-glow: #ff4d4d;
+            --success-glow: #00e676;
+            --warning-glow: #ffcc00;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 128, 128, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(0, 229, 229, 0.08) 0%, transparent 40%);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* BANNER DE INSTALAÇÃO PWA */
+        .pwa-install-banner {
+            display: none;
+            background: linear-gradient(90deg, #008080 0%, #004d4d 100%);
+            color: #ffffff;
+            padding: 10px 16px;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--primary-glow);
+            font-size: 0.82rem;
+            z-index: 1000;
+        }
+
+        .pwa-install-banner button {
+            background: #ffffff;
+            color: #004d4d;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-left: 10px;
+        }
+
+        /* HEADER RESPONSIVO */
+        header {
+            background: rgba(11, 15, 18, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        header h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        header h1 i {
+            color: var(--primary-glow);
+            font-size: 1.2rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .update-status {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .update-status span strong {
+            color: var(--primary-glow);
+        }
+
+        .btn-header-act {
+            background: rgba(0, 128, 128, 0.2);
+            border: 1px solid var(--primary);
+            color: var(--primary-glow);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-install-pwa {
+            background: linear-gradient(135deg, var(--primary) 0%, #00e5e5 100%);
+            color: #0b0f12;
+            border: none;
+            box-shadow: 0 0 10px var(--primary-glow-alpha);
+            display: none; /* Ativado via JS se PWA for instalável */
+        }
+
+        .date-filters {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(18, 26, 31, 0.9);
+            border: 1px solid var(--panel-border);
+            padding: 6px 12px;
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .filter-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--primary-glow);
+        }
+
+        .filter-group input[type="date"] {
+            background: rgba(10, 15, 18, 0.8);
+            border: 1px solid var(--panel-border);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--text-main);
+            color-scheme: dark;
+        }
+
+        .btn-filter {
+            background: rgba(0, 229, 229, 0.15);
+            border: 1px solid var(--primary-glow);
+            color: var(--primary-glow);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-clear-header {
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid var(--danger-glow);
+            color: var(--danger-glow);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* CONTAINER PRINCIPAL E SIDEBAR */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        aside {
+            width: 240px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 15px;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        aside h3 {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            padding-left: 6px;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, rgba(0, 128, 128, 0.4) 0%, rgba(11, 15, 18, 0.8) 100%);
+            border: 1px solid var(--primary-glow);
+            color: #ffffff;
+            box-shadow: 0 0 15px var(--primary-glow-alpha);
+        }
+
+        .nav-btn.active i {
+            color: var(--primary-glow);
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: var(--panel-border);
+            margin: 4px 0;
+        }
+
+        .btn-clear-sidebar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 77, 77, 0.05);
+            border: 1px solid rgba(255, 77, 77, 0.2);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--danger-glow);
+            cursor: pointer;
+        }
+
+        main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* PAINEL DE CONTROLE */
+        .view-controls-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-total-card {
+            background: linear-gradient(135deg, rgba(0, 128, 128, 0.3) 0%, rgba(10, 15, 18, 0.95) 100%);
+            border: 1px solid var(--primary-glow);
+            padding: 6px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .header-total-card span {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .header-total-card strong {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--primary-glow);
+        }
+
+        .meta-input-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .meta-input-group input {
+            background: rgba(10, 15, 18, 0.8);
+            border: 1px solid var(--panel-border);
+            padding: 5px 8px;
+            border-radius: 6px;
+            color: var(--primary-glow);
+            font-weight: 700;
+            width: 90px;
+            text-align: right;
+            color-scheme: dark;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .custom-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-main);
+            user-select: none;
+        }
+
+        .custom-checkbox input[type="checkbox"] {
+            accent-color: var(--primary);
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+
+        /* GRID DASHBOARD */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-grid.two-columns {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card-component {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card-component::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title i {
+            color: var(--primary-glow);
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 15, 18, 0.6);
+            border: 1px solid var(--panel-border);
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ranking-item.selected {
+            background: linear-gradient(135deg, rgba(0, 128, 128, 0.35) 0%, rgba(10, 15, 18, 0.95) 100%);
+            border: 1px solid var(--primary-glow);
+        }
+
+        .ranking-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ranking-position {
+            width: 22px;
+            height: 22px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .ranking-item.selected .ranking-position {
+            background: var(--primary-glow);
+            color: #0b0f12;
+        }
+
+        .ranking-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #ffffff;
+        }
+
+        .ranking-value {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--primary-glow);
+        }
+
+        /* CARDS MÁQUINAS */
+        .equip-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .equip-card {
+            background: linear-gradient(135deg, rgba(18, 26, 31, 0.9) 0%, rgba(10, 15, 18, 0.95) 100%);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .equip-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .equip-card-pos {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .equip-card-tag {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--primary-glow);
+            background: rgba(0, 229, 229, 0.12);
+            border: 1px solid rgba(0, 229, 229, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .equip-card-desc {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            height: 2.4em;
+        }
+
+        .equip-card-value {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--success-glow);
+            margin-top: 2px;
+        }
+
+        /* TABELA RESPONSIVA */
+        .table-container {
+            max-height: 280px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid var(--panel-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            background: rgba(0, 128, 128, 0.25);
+            color: var(--primary-glow);
+            padding: 10px;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--panel-border);
+            color: var(--text-main);
+        }
+
+        .semaforo {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .semaforo-verde { background: rgba(0, 230, 118, 0.15); color: var(--success-glow); border: 1px solid rgba(0, 230, 118, 0.3); }
+        .semaforo-vermelho { background: rgba(255, 77, 77, 0.15); color: var(--danger-glow); border: 1px solid rgba(255, 77, 77, 0.3); }
+        .semaforo-amarelo { background: rgba(255, 204, 0, 0.15); color: var(--warning-glow); border: 1px solid rgba(255, 204, 0, 0.3); }
+
+        .chart-box {
+            position: relative;
+            height: 240px;
+            width: 100%;
+        }
+
+        .badge-led {
+            padding: 3px 8px;
+            background: rgba(0, 229, 229, 0.08);
+            border: 1px solid var(--primary-glow);
+            border-radius: 20px;
+            color: var(--primary-glow);
+            font-weight: 600;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-clear-filter {
+            background: none;
+            border: none;
+            color: var(--danger-glow);
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-left: 4px;
+        }
+
+        /* FORMULÁRIOS & MODAIS */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            background: rgba(10, 15, 18, 0.8);
+            border: 1px solid var(--panel-border);
+            padding: 8px 10px;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, var(--primary) 0%, rgba(0, 229, 229, 0.8) 100%);
+            color: #0b0f12;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        /* MOBILE ADJUSTMENTS */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 12px 15px;
+            }
+            .header-right {
+                justify-content: space-between;
+            }
+            .main-container {
+                flex-direction: column;
+            }
+            aside {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 10px 15px;
+                gap: 8px;
+                align-items: center;
+            }
+            aside h3, .sidebar-divider {
+                display: none;
+            }
+            .nav-btn, .btn-clear-sidebar {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+                white-space: nowrap;
+                width: auto;
+            }
+            main {
+                padding: 12px;
+            }
+            .view-controls-panel {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .checkbox-group {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BANNER PWA PARA INSTALAÇÃO -->
+    <div id="pwaBanner" class="pwa-install-banner">
+        <span><i class="bi bi-phone-vibrate"></i> Instale o App no seu dispositivo para acesso rápido.</span>
+        <div>
+            <button onclick="installPWA()">Instalar</button>
+            <button onclick="dismissPWABanner()" style="background:transparent; color:#fff;">X</button>
+        </div>
+    </div>
+
+    <header>
+        <h1>
+            <i class="bi bi-lightning-charge-fill"></i> SOLUÇÃO EQUIPAMENTOS ELÉTRICOS
+        </h1>
+        
+        <div class="header-right">
+            <button id="btnPWAInstallHeader" class="btn-header-act btn-install-pwa" onclick="installPWA()">
+                <i class="bi bi-download"></i> Instalar App
+            </button>
+
+            <div class="update-status">
+                <span>Última atualização:</span>
+                <strong id="lastUpdateLabel">Carregando...</strong>
+            </div>
+
+            <button class="btn-header-act" onclick="loadCurrentSectionData()" title="Atualizar dados">
+                <i class="bi bi-arrow-clockwise"></i> Atualizar
+            </button>
+
+            <div class="date-filters">
+                <div class="filter-group">
+                    <label for="startDate">De:</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <label for="endDate">Até:</label>
+                    <input type="date" id="endDate">
+                </div>
+                <button class="btn-filter" onclick="loadCurrentSectionData()" title="Filtrar">
+                    <i class="bi bi-funnel-fill"></i>
+                </button>
+                <button class="btn-clear-header" onclick="clearDateFilters()" title="Limpar">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside>
+            <h3>Módulos</h3>
+            <button class="nav-btn active" onclick="switchSection('custos', this)">
+                <i class="bi bi-cash-coin"></i> Custos
+            </button>
+            <button class="nav-btn" onclick="switchSection('manutencao', this)">
+                <i class="bi bi-tools"></i> Ordens
+            </button>
+            <button class="nav-btn" onclick="switchSection('chamados', this)">
+                <i class="bi bi-clipboard2-plus"></i> Chamados
+            </button>
+            <div class="sidebar-divider"></div>
+            <button class="btn-clear-sidebar" onclick="clearModuleSelection()" title="Limpar">
+                <i class="bi bi-arrow-counterclockwise"></i> Limpar
+            </button>
+        </aside>
+
+        <main id="contentArea">
+            
+            <!-- MÓDULO CUSTOS -->
+            <div id="module-custos" class="module-view">
+                
+                <div class="view-controls-panel">
+                    <div class="header-total-card">
+                        <span><i class="bi bi-wallet2"></i> Custo Total:</span>
+                        <strong id="headerTotalValue">R$ 0,00</strong>
+                    </div>
+
+                    <div class="meta-input-group">
+                        <label for="metaInput"><i class="bi bi-bullseye"></i> Meta:</label>
+                        <input type="number" id="metaInput" value="30000" step="1000" onchange="updateChartWithMeta()">
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" id="chkRank" checked onchange="updateViewLayout()"> Rank
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" id="chkCards" checked onchange="updateViewLayout()"> Cards
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" id="chkChart" checked onchange="updateViewLayout()"> Gráfico
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" id="chkTable" checked onchange="updateViewLayout()"> Tabela
+                        </label>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid two-columns" id="dashboardGrid" style="margin-top: 15px;">
+                    
+                    <div class="card-component" id="boxRank">
+                        <div class="card-header-flex">
+                            <div class="card-title">
+                                <i class="bi bi-trophy-fill"></i> Top 5 Setores - Custos
+                            </div>
+                            <div class="badge-led" id="filterStatusBadge">Geral</div>
+                        </div>
+                        <div class="ranking-list" id="topRankingList">
+                            <div style="text-align: center; padding: 15px; color: var(--text-muted);">Carregando...</div>
+                        </div>
+                    </div>
+
+                    <div class="card-component" id="boxChart">
+                        <div class="card-header-flex">
+                            <div class="card-title">
+                                <i class="bi bi-bar-chart-fill"></i> Variação Mensal vs Meta
+                            </div>
+                        </div>
+                        <div class="chart-box">
+                            <canvas id="costChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card-component" id="boxEquipCards" style="grid-column: 1 / -1;">
+                        <div class="card-header-flex">
+                            <div class="card-title">
+                                <i class="bi bi-cpu-fill"></i> Top 5 Máquinas (Setor Selecionado)
+                            </div>
+                        </div>
+                        <div class="equip-cards-container" id="equipCardsContainer">
+                            <div style="text-align: center; padding: 15px; color: var(--text-muted); grid-column: 1 / -1;">Carregando...</div>
+                        </div>
+                    </div>
+
+                    <div class="card-component" id="boxTable" style="grid-column: 1 / -1;">
+                        <div class="card-header-flex">
+                            <div class="card-title">
+                                <i class="bi bi-table"></i> Tabela Detalhada de Custos
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Setor</th>
+                                        <th>Tag</th>
+                                        <th>Item</th>
+                                        <th>Qtd</th>
+                                        <th>Custo Total</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    <tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Carregando dados...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- MÓDULO ORDENS -->
+            <div id="module-manutencao" class="module-view" style="display: none;">
+                <div class="card-component">
+                    <div class="card-header-flex">
+                        <div class="card-title">
+                            <i class="bi bi-tools"></i> Ordens de Manutenção
+                        </div>
+                        <button class="btn-action" onclick="toggleOrderForm()">
+                            <i class="bi bi-plus-circle"></i> Nova Ordem
+                        </button>
+                    </div>
+
+                    <div id="orderFormContainer" style="display: none; border-top: 1px solid var(--panel-border); padding-top: 15px;">
+                        <h4 style="font-size: 0.85rem; color: var(--primary-glow);">Criar Ordem de Serviço</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Setor</label>
+                                <select id="ordSetor">
+                                    <option>USINAGEM</option>
+                                    <option>CALDEIRARIA</option>
+                                    <option>MONTAGEM</option>
+                                    <option>MANUTENÇÃO</option>
+                                    <option>ELÉTRICA</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tag / Equipamento</label>
+                                <input type="text" id="ordTag" placeholder="Ex: TAG-1024 / Torno CNC">
+                            </div>
+                            <div class="form-group">
+                                <label>Serviço / Item</label>
+                                <input type="text" id="ordItem" placeholder="Descrição do serviço">
+                            </div>
+                            <div class="form-group">
+                                <label>Custo Estimado (R$)</label>
+                                <input type="number" id="ordCusto" placeholder="0,00">
+                            </div>
+                        </div>
+                        <button class="btn-action" onclick="saveNewOrder()">Salvar Ordem</button>
+                    </div>
+
+                    <div class="table-container" style="margin-top: 15px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>OS Nº</th>
+                                    <th>Data</th>
+                                    <th>Setor</th>
+                                    <th>Equipamento</th>
+                                    <th>Descrição</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO CHAMADOS -->
+            <div id="module-chamados" class="module-view" style="display: none;">
+                <div class="card-component">
+                    <div class="card-title">
+                        <i class="bi bi-clipboard2-plus"></i> Abertura de Chamado Técnico
+                    </div>
+                    <p style="color: var(--text-muted); font-size:0.8rem;">Solicitação direta para a equipe de elétrica/manutenção.</p>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Solicitante</label>
+                            <input type="text" id="chamSolicitante" placeholder="Seu nome">
+                        </div>
+                        <div class="form-group">
+                            <label>Setor</label>
+                            <select id="chamSetor">
+                                <option>USINAGEM</option>
+                                <option>CALDEIRARIA</option>
+                                <option>MONTAGEM</option>
+                                <option>PRENSAS</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Prioridade</label>
+                            <select id="chamPrioridade">
+                                <option>BAIXA</option>
+                                <option>MÉDIA</option>
+                                <option>ALTA - PARADA DE MÁQUINA</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Descrição da Falha / Chamado</label>
+                            <textarea id="chamDesc" rows="3" placeholder="Descreva o problema elétrico ou técnico..."></textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn-action" onclick="submitTicket()">
+                            <i class="bi bi-send"></i> Enviar Chamado
+                        </button>
+                    </div>
+
+                    <div class="card-title" style="margin-top: 25px;">
+                        <i class="bi bi-list-stars"></i> Chamados Abertos
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Data</th>
+                                    <th>Solicitante</th>
+                                    <th>Setor</th>
+                                    <th>Prioridade</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="chamadosTableBody">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SCRIPTS DE PWA E LÓGICA DO DASHBOARD -->
+    <script>
+        /* ================= PWA CONFIGURATION & MANIFEST ================= */
+        const manifestData = {
+            "name": "SOLUÇÃO EQUIPAMENTOS ELÉTRICOS",
+            "short_name": "Solução Elétrica",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#0b0f12",
+            "theme_color": "#0b0f12",
+            "icons": [
+                {
+                    "src": "https://cdn-icons-png.flaticon.com/512/2983/2983780.png",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        };
+
+        const stringManifest = JSON.stringify(manifestData);
+        const blob = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        document.getElementById('manifestPlaceholder').setAttribute('href', manifestURL);
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwaBanner').style.display = 'flex';
+            document.getElementById('btnPWAInstallHeader').style.display = 'inline-flex';
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário aceitou a instalação');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('pwaBanner').style.display = 'none';
+                    document.getElementById('btnPWAInstallHeader').style.display = 'none';
+                });
+            }
+        }
+
+        function dismissPWABanner() {
+            document.getElementById('pwaBanner').style.display = 'none';
+        }
+
+        // Service Worker inline em Data URI
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'solucao-eletrica-v1';
+                self.addEventListener('install', (e) => {
+                    e.waitUntil(
+                        caches.open(CACHE_NAME).then((cache) => {
+                            return cache.addAll(['./']);
+                        })
+                    );
+                });
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(
+                        caches.match(e.request).then((res) => res || fetch(e.request))
+                    );
+                });
+            `;
+            const blobSW = new Blob([swCode], { type: 'text/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(blobSW))
+                .catch(err => console.log('SW registration error', err));
+        }
+
+        /* ================= ENGINE DE SIMULAÇÃO DE DADOS ================= */
+        // Gera base inicial realista estilo Google Spreadsheet para execução local e PWA
+        function generateMockData() {
+            const setores = ["USINAGEM", "CALDEIRARIA", "MONTAGEM", "MANUTENÇÃO", "ELÉTRICA", "ESTAMPARIA"];
+            const maquinas = [
+                { tag: "TOR-01", name: "Torno CNC Nardini", setor: "USINAGEM" },
+                { tag: "FRE-03", name: "Fresadora Universal", setor: "USINAGEM" },
+                { tag: "SOL-05", name: "Inversora de Solda MIG", setor: "CALDEIRARIA" },
+                { tag: "PRE-02", name: "Prensa Hidráulica 100T", setor: "ESTAMPARIA" },
+                { tag: "PON-01", name: "Ponte Rolante 10 Toneladas", setor: "MONTAGEM" },
+                { tag: "COM-04", name: "Compressor Parafuso 50HP", setor: "MANUTENÇÃO" },
+                { tag: "TRA-02", name: "Transformador 500kVA", setor: "ELÉTRICA" }
+            ];
+            const itens = ["Substituição de Contator", "Troca de Rolamento", "Revisão de Inversor de Frequência", "Reparo Elétrico", "Cabo Flexível 10mm", "Sensor Indutivo PNP"];
+            const statuses = ["FINALIZADO", "VALIDADO", "PENDENTE", "SOLICITADO"];
+
+            let tableRows = [];
+            let setorMap = {};
+            let monthMap = {};
+            let setorMonthMap = {};
+            let setorEquipMap = {};
+
+            const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+            const now = new Date();
+
+            for (let i = 1; i <= 35; i++) {
+                const dateObj = new Date(now.getFullYear(), Math.floor(Math.random() * 10), Math.floor(Math.random() * 28) + 1);
+                const maq = maquinas[Math.floor(Math.random() * maquinas.length)];
+                const item = itens[Math.floor(Math.random() * itens.length)];
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
+                const val = Math.floor(Math.random() * 4500) + 250;
+                const qtd = Math.floor(Math.random() * 4) + 1;
+
+                const setor = maq.setor;
+                const mKey = monthNames[dateObj.getMonth()] + "/" + dateObj.getFullYear();
+
+                if (!setorMap[setor]) setorMap[setor] = 0;
+                setorMap[setor] += val;
+
+                if (!monthMap[mKey]) monthMap[mKey] = 0;
+                monthMap[mKey] += val;
+
+                if (!setorMonthMap[setor]) setorMonthMap[setor] = {};
+                if (!setorMonthMap[setor][mKey]) setorMonthMap[setor][mKey] = 0;
+                setorMonthMap[setor][mKey] += val;
+
+                const equipKey = maq.tag + "|" + maq.name;
+                if (!setorEquipMap[setor]) setorEquipMap[setor] = {};
+                if (!setorEquipMap[setor][equipKey]) setorEquipMap[setor][equipKey] = 0;
+                setorEquipMap[setor][equipKey] += val;
+
+                tableRows.push({
+                    rawDate: dateObj,
+                    data: dateObj.toLocaleDateString('pt-BR'),
+                    setor: setor,
+                    tag: maq.tag,
+                    equipamento: maq.name,
+                    item: item,
+                    qtd: qtd,
+                    custo: val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                    rawCusto: val,
+                    status: status
+                });
+            }
+
+            let listSetores = [];
+            for (let s in setorMap) {
+                listSetores.push({ setor: s, total: setorMap[s] });
+            }
+            listSetores.sort((a, b) => b.total - a.total);
+
+            let chartArray = [];
+            for (let m in monthMap) {
+                chartArray.push({ label: m, total: monthMap[m] });
+            }
+
+            return {
+                ranking: listSetores.slice(0, 5),
+                chartData: chartArray,
+                setorMonthData: setorMonthMap,
+                setorEquipMap: setorEquipMap,
+                tableData: tableRows,
+                lastUpdate: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
+            };
+        }
+
+        /* ================= DASHBOARD CONTROLLER ================= */
+        let currentSection = 'custos';
+        let myChart = null;
+        let cachedData = null;
+        let selectedSetorFilter = null;
+
+        // Mock Ordens e Chamados
+        let ordensList = [
+            { id: "OS-1001", data: "12/10/2026", setor: "USINAGEM", equip: "Torno CNC Nardini", desc: "Manutenção Preventiva Painel", valor: "R$ 1.200,00", status: "FINALIZADO" },
+            { id: "OS-1002", data: "14/10/2026", setor: "CALDEIRARIA", equip: "Inversora MIG", desc: "Substituição Cabo e Tocha", valor: "R$ 450,00", status: "PENDENTE" }
+        ];
+
+        let chamadosList = [
+            { id: "CH-801", data: "15/10/2026", solicitante: "Carlos Silva", setor: "USINAGEM", prio: "ALTA - PARADA DE MÁQUINA", status: "EM ATENDIMENTO" }
+        ];
+
+        window.onload = function() {
+            cachedData = generateMockData();
+            loadCurrentSectionData();
+            renderOrdersTable();
+            renderChamadosTable();
+        };
+
+        function switchSection(sectionKey, element) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            if (element) element.classList.add('active');
+
+            currentSection = sectionKey;
+            document.querySelectorAll('.module-view').forEach(view => view.style.display = 'none');
+            const activeView = document.getElementById('module-' + sectionKey);
+            if (activeView) activeView.style.display = 'block';
+
+            if (sectionKey === 'custos') {
+                loadCurrentSectionData();
+            }
+        }
+
+        function loadCurrentSectionData() {
+            if (currentSection !== 'custos') return;
+
+            // Se integrado com Google Apps Script
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                google.script.run
+                    .withSuccessHandler(function(res) {
+                        cachedData = res;
+                        applyFiltersAndRender();
+                        document.getElementById('lastUpdateLabel').innerText = res.lastUpdate;
+                    })
+                    .getDashboardCostData(startDate, endDate);
+            } else {
+                // Modo Standalone Local / PWA
+                applyFiltersAndRender();
+                document.getElementById('lastUpdateLabel').innerText = cachedData.lastUpdate;
+            }
+        }
+
+        function applyFiltersAndRender() {
+            if (!cachedData) return;
+
+            const startDateVal = document.getElementById('startDate').value;
+            const endDateVal = document.getElementById('endDate').value;
+            const start = startDateVal ? new Date(startDateVal) : null;
+            const end = endDateVal ? new Date(endDateVal) : null;
+            if (end) end.setHours(23, 59, 59, 999);
+
+            let filteredTable = cachedData.tableData.filter(row => {
+                if (start && row.rawDate < start) return false;
+                if (end && row.rawDate > end) return false;
+                return true;
+            });
+
+            let chartSourceData = cachedData.chartData; 
+            let equipRankingForCards = [];
+
+            if (selectedSetorFilter) {
+                filteredTable = filteredTable.filter(row => row.setor === selectedSetorFilter);
+
+                let setorMonths = cachedData.setorMonthData[selectedSetorFilter] || {};
+                chartSourceData = Object.keys(setorMonths).map(m => ({
+                    label: m,
+                    total: setorMonths[m]
+                }));
+
+                let eqMap = cachedData.setorEquipMap[selectedSetorFilter] || {};
+                for (let eqKey in eqMap) {
+                    let parts = eqKey.split('|');
+                    equipRankingForCards.push({ tag: parts[0], name: parts[1], total: eqMap[eqKey] });
+                }
+                equipRankingForCards.sort((a, b) => b.total - a.total);
+                equipRankingForCards = equipRankingForCards.slice(0, 5);
+
+            } else {
+                let globalEqMap = {};
+                filteredTable.forEach(row => {
+                    let key = row.tag + "|" + row.item;
+                    if (!globalEqMap[key]) {
+                        globalEqMap[key] = { tag: row.tag, name: row.equipamento || row.item, total: 0 };
+                    }
+                    globalEqMap[key].total += row.rawCusto;
+                });
+                
+                for (let k in globalEqMap) {
+                    equipRankingForCards.push(globalEqMap[k]);
+                }
+                equipRankingForCards.sort((a, b) => b.total - a.total);
+                equipRankingForCards = equipRankingForCards.slice(0, 5);
+            }
+
+            renderRanking(cachedData.ranking);
+            renderEquipCards(equipRankingForCards);
+            renderChart(chartSourceData);
+            renderTable(filteredTable);
+            updateBadgeStatus();
+            updateViewLayout();
+        }
+
+        function updateBadgeStatus() {
+            const badge = document.getElementById('filterStatusBadge');
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            let texts = [];
+            if (startDate || endDate) texts.push("Período");
+            if (selectedSetorFilter) texts.push(`Setor: ${selectedSetorFilter}`);
+
+            if (texts.length > 0) {
+                badge.innerHTML = `<i class="bi bi-funnel-fill"></i> ${texts.join(" | ")} <button class="btn-clear-filter" onclick="clearDynamicFilters(event)" title="Limpar"><i class="bi bi-x-circle-fill"></i></button>`;
+            } else {
+                badge.innerHTML = `Geral`;
+            }
+        }
+
+        function filterBySetor(setorName) {
+            if (selectedSetorFilter === setorName) {
+                selectedSetorFilter = null; 
+            } else {
+                selectedSetorFilter = setorName;
+            }
+            applyFiltersAndRender();
+        }
+
+        function clearDynamicFilters(e) {
+            if (e) e.stopPropagation();
+            selectedSetorFilter = null;
+            applyFiltersAndRender();
+        }
+
+        function renderRanking(data) {
+            const listContainer = document.getElementById('topRankingList');
+            if (!data || data.length === 0) {
+                listContainer.innerHTML = `<div style="text-align: center; padding: 15px; color: var(--text-muted);">Nenhum dado encontrado.</div>`;
+                return;
+            }
+
+            let html = '';
+            data.forEach((item, index) => {
+                const pos = index + 1;
+                const isSelected = selectedSetorFilter === item.setor;
+                const formattedVal = item.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                html += `
+                    <div class="ranking-item ${isSelected ? 'selected' : ''}" onclick="filterBySetor('${item.setor}')">
+                        <div class="ranking-info">
+                            <div class="ranking-position">${pos}</div>
+                            <div class="ranking-name">${item.setor}</div>
+                        </div>
+                        <div class="ranking-value">${formattedVal}</div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+        }
+
+        function renderEquipCards(data) {
+            const container = document.getElementById('equipCardsContainer');
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 15px; color: var(--text-muted); grid-column: 1 / -1;">Nenhum equipamento encontrado.</div>`;
+                return;
+            }
+
+            let html = '';
+            data.forEach((item, index) => {
+                const pos = index + 1;
+                const formattedVal = item.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                html += `
+                    <div class="equip-card">
+                        <div class="equip-card-header">
+                            <span class="equip-card-pos">#${pos}</span>
+                            <span class="equip-card-tag">${item.tag}</span>
+                        </div>
+                        <div class="equip-card-desc" title="${item.name}">${item.name}</div>
+                        <div class="equip-card-value">${formattedVal}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('costChart').getContext('2d');
+            const metaVal = parseFloat(document.getElementById('metaInput').value) || 30000;
+            
+            const labels = data.map(d => d.label);
+            const values = data.map(d => d.total);
+
+            const backgroundColors = values.map(val => val > metaVal ? 'rgba(255, 77, 77, 0.65)' : 'rgba(0, 230, 118, 0.65)');
+            const borderColors = values.map(val => val > metaVal ? '#ff4d4d' : '#00e676');
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Custo Mensal (R$)',
+                        data: values,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                plugins: [ChartDataLabels],
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { top: 25 }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#ffffff',
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 4,
+                            backgroundColor: 'rgba(11, 15, 18, 0.9)',
+                            borderColor: 'rgba(0, 229, 229, 0.3)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            padding: 3,
+                            font: { size: 10, weight: 'bold' },
+                            formatter: function(value) {
+                                return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8a9ea7', font: { size: 10 } }, grid: { display: false } },
+                        y: { 
+                            ticks: { color: '#8a9ea7', font: { size: 10 } }, 
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            grace: '15%'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTable(tableRows) {
+            const tbody = document.getElementById('tableBody');
+            let totalGasto = 0;
+
+            if (!tableRows || tableRows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Nenhum registro encontrado.</td></tr>`;
+                document.getElementById('headerTotalValue').innerText = (0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                return;
+            }
+
+            let html = '';
+            tableRows.forEach(row => {
+                totalGasto += row.rawCusto;
+
+                let semClass = 'semaforo-amarelo';
+                let semText = row.status;
+                if (row.status.includes('FINALIZADO') || row.status.includes('VALIDADO')) {
+                    semClass = 'semaforo-verde';
+                } else if (row.status.includes('SOLICITADO') || row.status.includes('PENDENTE')) {
+                    semClass = 'semaforo-vermelho';
+                }
+
+                html += `
+                    <tr>
+                        <td>${row.data}</td>
+                        <td><strong>${row.setor}</strong></td>
+                        <td><span style="color: var(--primary-glow); font-weight: 700;">${row.tag}</span></td>
+                        <td>${row.item}</td>
+                        <td>${row.qtd}</td>
+                        <td><span style="color: var(--primary-glow);">${row.custo}</span></td>
+                        <td><span class="semaforo ${semClass}"><i class="bi bi-circle-fill" style="font-size: 5px;"></i> ${semText}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            document.getElementById('headerTotalValue').innerText = totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function updateChartWithMeta() {
+            if (cachedData && cachedData.chartData) {
+                applyFiltersAndRender();
+            }
+        }
+
+        function updateViewLayout() {
+            const chkRank = document.getElementById('chkRank').checked;
+            const chkCards = document.getElementById('chkCards').checked;
+            const chkChart = document.getElementById('chkChart').checked;
+            const chkTable = document.getElementById('chkTable').checked;
+
+            const boxRank = document.getElementById('boxRank');
+            const boxEquipCards = document.getElementById('boxEquipCards');
+            const boxChart = document.getElementById('boxChart');
+            const boxTable = document.getElementById('boxTable');
+            const grid = document.getElementById('dashboardGrid');
+
+            boxRank.style.display = chkRank ? 'flex' : 'none';
+            boxEquipCards.style.display = chkCards ? 'flex' : 'none';
+            boxChart.style.display = chkChart ? 'flex' : 'none';
+            boxTable.style.display = chkTable ? 'flex' : 'none';
+
+            let visibleCount = (chkRank ? 1 : 0) + (chkChart ? 1 : 0);
+            if (visibleCount === 2) {
+                grid.classList.add('two-columns');
+            } else {
+                grid.classList.remove('two-columns');
+            }
+
+            if (chkChart && myChart) {
+                setTimeout(() => myChart.resize(), 150);
+            }
+        }
+
+        function clearDateFilters() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            selectedSetorFilter = null;
+            loadCurrentSectionData();
+        }
+
+        function clearModuleSelection() {
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            if (buttons.length > 0) {
+                buttons[0].classList.add('active');
+                switchSection('custos', buttons[0]);
+            }
+        }
+
+        /* ================= ORDENS E CHAMADOS CONTROLLERS ================= */
+        function toggleOrderForm() {
+            const form = document.getElementById('orderFormContainer');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function saveNewOrder() {
+            const setor = document.getElementById('ordSetor').value;
+            const tag = document.getElementById('ordTag').value || 'N/A';
+            const item = document.getElementById('ordItem').value || 'Serviço Elétrico';
+            const val = parseFloat(document.getElementById('ordCusto').value) || 0;
+
+            const newOS = {
+                id: "OS-" + (1000 + ordensList.length + 1),
+                data: new Date().toLocaleDateString('pt-BR'),
+                setor: setor,
+                equip: tag,
+                desc: item,
+                valor: val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                status: "PENDENTE"
+            };
+
+            ordensList.unshift(newOS);
+            renderOrdersTable();
+            toggleOrderForm();
+
+            // Adiciona aos custos dinâmicos do dashboard também
+            cachedData.tableData.unshift({
+                rawDate: new Date(),
+                data: newOS.data,
+                setor: setor,
+                tag: tag,
+                equipamento: tag,
+                item: item,
+                qtd: 1,
+                custo: newOS.valor,
+                rawCusto: val,
+                status: "PENDENTE"
+            });
+        }
+
+        function renderOrdersTable() {
+            const tbody = document.getElementById('ordersTableBody');
+            let html = '';
+            ordensList.forEach(ord => {
+                let sem = ord.status === 'FINALIZADO' ? 'semaforo-verde' : 'semaforo-amarelo';
+                html += `
+                    <tr>
+                        <td><strong>${ord.id}</strong></td>
+                        <td>${ord.data}</td>
+                        <td>${ord.setor}</td>
+                        <td>${ord.equip}</td>
+                        <td>${ord.desc}</td>
+                        <td>${ord.valor}</td>
+                        <td><span class="semaforo ${sem}">${ord.status}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function submitTicket() {
+            const sol = document.getElementById('chamSolicitante').value || 'Anônimo';
+            const setor = document.getElementById('chamSetor').value;
+            const prio = document.getElementById('chamPrioridade').value;
+
+            const newTicket = {
+                id: "CH-" + (800 + chamadosList.length + 1),
+                data: new Date().toLocaleDateString('pt-BR'),
+                solicitante: sol,
+                setor: setor,
+                prio: prio,
+                status: "ABERTO"
+            };
+
+            chamadosList.unshift(newTicket);
+            renderChamadosTable();
+            document.getElementById('chamSolicitante').value = '';
+            document.getElementById('chamDesc').value = '';
+        }
+
+        function renderChamadosTable() {
+            const tbody = document.getElementById('chamadosTableBody');
+            let html = '';
+            chamadosList.forEach(ch => {
+                let sem = ch.prio.includes('ALTA') ? 'semaforo-vermelho' : 'semaforo-amarelo';
+                html += `
+                    <tr>
+                        <td><strong>${ch.id}</strong></td>
+                        <td>${ch.data}</td>
+                        <td>${ch.solicitante}</td>
+                        <td>${ch.setor}</td>
+                        <td><span class="semaforo ${sem}">${ch.prio}</span></td>
+                        <td><span class="semaforo semaforo-amarelo">${ch.status}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
